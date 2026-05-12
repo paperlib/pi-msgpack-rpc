@@ -1,7 +1,7 @@
 {
   "name": "pi-msgpack-rpc",
   "description": "A MessagePack RPC tool for Pi",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "index.ts",
   "repository": {
     "type": "git",
