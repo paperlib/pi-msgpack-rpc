@@ -10,13 +10,13 @@ export default function (pi: ExtensionAPI) {
     label: "MessagePack RPC Call",
     description: "Generic MessagePack RPC Calls Interface",
     parameters: Type.Object({
-      server: Type.String({ description: "Exact socket path from :echo v:servername inside Neovim" }),
-      method: Type.String({ description: "e.g. nvim_get_api_info" }),
+      server: Type.String({ description: "Neovim RPC socket path (eg. :echo v:servername in Neovim" }),
+      method: Type.String({ description: "Any of Neovim's RPC API methods, e.g. nvim_get_api_info" }),
       params: Type.Array(Type.Any(), { default: [] }),
       timeout: Type.Optional(Type.Number({ default: 5000 })),
     }),
     async execute(toolCallId, params, signal, onUpdate, ctx) {
-      ctx.ui.notify(`[Tool] msgpack_rpc_call invoked with params: ${JSON.stringify(params)}`, "info");
+      ctx.ui.notify(`[pi-msgpack-rpc tool] rpc_call invoked with: ${JSON.stringify(params)}`, "info");
 
       const server  = params?.server;
       const method  = params?.method;
@@ -24,11 +24,11 @@ export default function (pi: ExtensionAPI) {
       const timeout = params?.timeout;
 
       if (!server || !method) {
-        ctx.ui.notify(`[Tool] Missing server or method`, "error");
+        ctx.ui.notify(`[pi-msgpack-rpc tool] missing server or method`, "error");
         throw new Error("server and method are required");
       }
 
-      ctx.ui.notify(`[Tool] Starting call to ${server} → ${method}`, "info");
+      ctx.ui.notify(`[pi-msgpack-rpc tool] calling ${server} → ${method}`, "info");
 
       const result = await msgpackRpcCall(server, method, args, timeout, ctx);
 
@@ -40,7 +40,8 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.events.on("msgpack:rpc:call", async (payload: any, ctx?: any) => {
-    const { server, method, params = [], timeout = 30000, correlationId } = payload || {};
+    ctx?.ui?.notify?.(`[pi-msgpack-rpc events] received: ${payload}`, "info");
+    const { server, method, params = [], timeout = 20000, correlationId, replyEvent } = payload || {};
 
     if (!server || !method || !correlationId) {
       pi.events.emit("msgpack:rpc:response", { correlationId, success: false, error: "Missing required fields" });
@@ -49,9 +50,9 @@ export default function (pi: ExtensionAPI) {
 
     try {
       const result = await msgpackRpcCall(server, method, params, timeout, ctx);
-      pi.events.emit("msgpack:rpc:response", { correlationId, success: true, result });
+      pi.events.emit(replyEvent, { success: true, result });
     } catch (err: any) {
-      pi.events.emit("msgpack:rpc:response", { correlationId, success: false, error: err.message });
+      pi.events.emit(replyEvent, { success: false, error: err.message });
     }
-  })
+  });
 }
