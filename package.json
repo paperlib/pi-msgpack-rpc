@@ -1,7 +1,8 @@
 {
   "name": "pi-msgpack-rpc",
   "description": "A MessagePack RPC tool for Pi",
-  "version": "0.2.3",
+  "keywords": ["pi-package", "MessagePack", "msgpack", "neovim", "nvim"],
+  "version": "0.2.4",
   "main": "index.ts",
   "repository": {
     "type": "git",
